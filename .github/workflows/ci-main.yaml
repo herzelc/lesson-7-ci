@@ -1,15 +1,16 @@
-name: My First CI Pipeline
+name: Code Quality Check
 
 on:
   push:
-    branches: [ "main" ] # ירוץ בכל פעם שתעשה Push לענף הראשי
+    branches: [ "main" ]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest # השרת שעליו הכל ירוץ ב-GitHub
+  check-json:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4 # פקודה שמושכת את הקוד שלך לתוך השרת
+        uses: actions/checkout@v4
 
-      - name: Run a Simple Script
-        run: echo "Hello Herzel! The CI process is working!"
+      - name: Validate JSON file
+        # פקודה שבודקת אם הקובץ הוא JSON תקין
+        run: cat app-config.json | jq .
