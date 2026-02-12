@@ -1,16 +1,26 @@
-name: Code Quality Check
+name: Helm and Code Quality
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  check-json:
+  devops-checks:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Validate JSON file
-        # פקודה שבודקת אם הקובץ הוא JSON תקין
-        run: cat app-config.json | jq .
+      - name: Install Helm
+        # שימוש ב-Action מוכן של Azure שמתקין את Helm על השרת
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Run Helm Lint
+        # הבדיקה החשובה: האם ה-Chart תקין?
+        run: helm lint ./my-chart
+
+      - name: Validate Config JSON
+        # הבדיקה הקודמת שלנו
+        run: jq . app-config.json
