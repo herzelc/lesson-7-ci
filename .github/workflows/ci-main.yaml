@@ -1,46 +1,57 @@
-name: Full DevOps Pipeline - Lint, Build and Test
+name: Full DevOps Pipeline - Final Version
 
 on:
   push:
+    branches: [ "main" ]
+  pull_request:
     branches: [ "main" ]
 
 jobs:
   devops-pipeline:
     runs-on: ubuntu-latest
     steps:
+      # 1. משיכת הקוד מה-Repository לשרת ה-Ubuntu הזמני
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # שלב 1: בדיקת ה-JSON
+      # 2. בדיקת תקינות קובץ ה-JSON
       - name: Validate Config JSON
-        run: jq . app-config.json
+        run: |
+          echo "Validating JSON file..."
+          jq . app-config.json
 
-      # שלב 2: התקנת Helm ובדיקת ה-Chart
+      # 3. התקנת Helm ובדיקת ה-Chart (עם תיקון ה-Token שדיברנו עליו)
       - name: Install Helm
         uses: azure/setup-helm@v3
         with:
           version: 'latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Helm Lint
-        run: helm lint ./my-chart
+        run: |
+          echo "Running Helm lint on my-chart..."
+          helm lint ./my-chart
 
-      # שלב 3: בנייה, הרצה ובדיקת "עשן" (Smoke Test) ל-Docker
+      # 4. בניית ה-Docker Image, הרצה ובדיקה שהכל עובד "חי"
       - name: Build and Test Docker Image
         run: |
-          # בניית האימג'
+          echo "Building Docker Image..."
           docker build -t my-first-app .
           
-          # הרצת הקונטיינר ברקע
+          echo "Starting Container for testing..."
           docker run -d -p 8080:80 --name test-container my-first-app
           
-          # המתנה קלה לוודא שהשרת (Nginx) עלה
+          # המתנה של 5 שניות כדי לתת ל-Nginx זמן לעלות
           sleep 5
           
-          # בדיקה שהקובץ נגיש בתוך הקונטיינר
-          echo "Checking if the app is alive..."
+          echo "Performing Smoke Test (Health Check)..."
+          # הפקודה תכשל אם השרת לא יחזיר תשובה תקינה (200 OK)
           curl --fail http://localhost:8080/config.json
           
-          # ניקוי
+          echo "Test passed! Cleaning up..."
           docker stop test-container
           docker rm test-container
-          echo "Pipeline finished successfully!"
+
+      - name: Final Summary
+        run: echo "CI Pipeline completed successfully for all stages!"
