@@ -1,0 +1,15 @@
+name: My First CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ] # ירוץ בכל פעם שתעשה Push לענף הראשי
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # השרת שעליו הכל ירוץ ב-GitHub
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4 # פקודה שמושכת את הקוד שלך לתוך השרת
+
+      - name: Run a Simple Script
+        run: echo "Hello Herzel! The CI process is working!"
