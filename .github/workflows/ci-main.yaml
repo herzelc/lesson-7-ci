@@ -1,4 +1,4 @@
-name: Helm and Code Quality
+name: Helm, Code and Docker Build
 
 on:
   push:
@@ -12,15 +12,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Helm
-        # שימוש ב-Action מוכן של Azure שמתקין את Helm על השרת
         uses: azure/setup-helm@v3
-        with:
-          version: 'latest'
 
       - name: Run Helm Lint
-        # הבדיקה החשובה: האם ה-Chart תקין?
         run: helm lint ./my-chart
 
       - name: Validate Config JSON
-        # הבדיקה הקודמת שלנו
         run: jq . app-config.json
+
+      # השלב החדש: בניית ה-Image
+      - name: Build Docker Image
+        run: |
+          docker build -t my-first-app:${{ github.sha }} .
+          echo "Build completed successfully!"
