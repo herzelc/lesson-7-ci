@@ -1,27 +1,46 @@
-name: Helm, Code and Docker Build
+name: Full DevOps Pipeline - Lint, Build and Test
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  devops-checks:
+  devops-pipeline:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # שלב 1: בדיקת ה-JSON
+      - name: Validate Config JSON
+        run: jq . app-config.json
+
+      # שלב 2: התקנת Helm ובדיקת ה-Chart
       - name: Install Helm
         uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
 
       - name: Run Helm Lint
         run: helm lint ./my-chart
 
-      - name: Validate Config JSON
-        run: jq . app-config.json
-
-      # השלב החדש: בניית ה-Image
-      - name: Build Docker Image
+      # שלב 3: בנייה, הרצה ובדיקת "עשן" (Smoke Test) ל-Docker
+      - name: Build and Test Docker Image
         run: |
-          docker build -t my-first-app:${{ github.sha }} .
-          echo "Build completed successfully!"
+          # בניית האימג'
+          docker build -t my-first-app .
+          
+          # הרצת הקונטיינר ברקע
+          docker run -d -p 8080:80 --name test-container my-first-app
+          
+          # המתנה קלה לוודא שהשרת (Nginx) עלה
+          sleep 5
+          
+          # בדיקה שהקובץ נגיש בתוך הקונטיינר
+          echo "Checking if the app is alive..."
+          curl --fail http://localhost:8080/config.json
+          
+          # ניקוי
+          docker stop test-container
+          docker rm test-container
+          echo "Pipeline finished successfully!"
